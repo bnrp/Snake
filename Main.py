@@ -49,8 +49,8 @@ snake_segment = []
 snake_segment.append(Segment.Segment(WHITE, segment_width, segment_height, 36 * 7, 36 * 3))
 spritelist.add(snake_segment[0])
 
-screen_width = 498
-screen_height = 498
+screen_width = 537
+screen_height = 537
 screen = pygame.display.set_mode([screen_width, screen_height])
 
 clock = pygame.time.Clock()
@@ -94,7 +94,7 @@ while not done:
     spritelist.add(snake_segment[-1]) # Creates new forward most sprite
 
     # Update the window
-    
+
     screen.fill(BLACK)
 
     spritelist.draw(screen)
