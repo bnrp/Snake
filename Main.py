@@ -3,9 +3,12 @@ import sys
 import pygame
 from pygame.locals import *
 import Segment
+import Food
 import time
 
 pygame.init()
+
+# Variables
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -19,29 +22,57 @@ changey = 0
 changex = 0
 
 spritelist = pygame.sprite.Group()
+foodsprite = pygame.sprite.Group()
 
-# Use this as reference
+isfood = True
+food = None
 
-"""
-snake_segments = []
-for i in range(15):
-    x = 250 - (segment_width + segment_pad) * i
-    y = 30
-    segment = Segment.Segment(WHITE, segment_width, segment_height, x, y)
-    snake_segments.append(segment)
-    spritelist.add(segment)
+addTurn = False
 
-use .pop to get rid of final array entry, then use .pop to remove from spritelist
-
-once back is removed, simultaneously add a new segment in the direction of motion <- or add a a new segment to the end of the array
-
-"""
+# Functions
 
 def getx(Segment):
     return Segment.rect.x
 
 def gety(Segment):
     return Segment.rect.y
+
+def move():
+    sslength = len(snake_segment) - 1 # Gets length of list
+    tempx = getx(snake_segment[sslength]) # Gets x location of forward most segment
+    tempy = gety(snake_segment[sslength]) # Gets Y location of forward most segment
+    spritelist.remove(snake_segment.pop(0)) # Removes backward most sprite and list index
+    snake_segment.append(Segment.Segment(WHITE, segment_width, segment_height, tempx + changex, tempy + changey)) # Creates new forward most index
+    spritelist.add(snake_segment[-1]) # Creates new forward mos sprite
+
+def update():
+    screen.fill(BLACK)
+    foodsprite.draw(screen)
+    spritelist.draw(screen)
+    pygame.display.flip()
+
+def createFood():
+    global food
+    food = Food.Food(RED)
+    foodsprite.add(food)
+    global isfood
+    isfood = False
+
+def removeFood():
+    global food
+    foodsprite.remove(food)
+    food = None
+    global isfood
+    isfood = True
+
+def addSegment():
+    global spritelist
+    global snake_segment
+    global addTurn
+    addTurn = True
+    newsegment = Segment.Segment(WHITE, segment_width, segment_height, getx(snake_segment[-1]) + changex, gety(snake_segment[-1]) + changey)
+    snake_segment.append(newsegment)
+    spritelist.add(newsegment)
 
 # Initial segment
 
@@ -58,7 +89,7 @@ done = False
 
 while not done:
 
-    time.sleep(.2)
+    time.sleep(.2) # Refresh speed
 
     # Event handler
 
@@ -68,35 +99,33 @@ while not done:
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
-                print('left`')
                 changex = -1 * (segment_height + segment_pad)
                 changey = 0
             elif event.key == pygame.K_RIGHT:
-                print('right')
                 changex = segment_height + segment_pad
                 changey = 0
             elif event.key == pygame.K_UP:
-                print('up')
                 changex = 0
                 changey = -1 * (segment_height + segment_pad)
             elif event.key == pygame.K_DOWN:
-                print('down')
                 changex =0
                 changey = 1 * (segment_height + segment_pad)
 
-    # Movement
+    if isfood == True:
+        createFood()
 
-    sslength = len(snake_segment) - 1 # Gets length of list
-    tempx = getx(snake_segment[sslength]) # Gets x location of forward most segment
-    tempy = gety(snake_segment[sslength]) # Gets y location of forward most segment
-    spritelist.remove(snake_segment.pop(0)) # Removes backward most sprite and list index
-    snake_segment.append(Segment.Segment(WHITE, segment_width, segment_height, tempx + changex, tempy + changey)) # Creates new forward most index
-    spritelist.add(snake_segment[-1]) # Creates new forward most sprite
+    if pygame.sprite.collide_rect(snake_segment[-1], food):
+        removeFood()
+        addSegment()
+
+    # Movement
+    if addTurn == False:
+        move()
+    elif addTurn == True:
+        addTurn = False
 
     # Update the window
 
-    screen.fill(BLACK)
+    update()
 
-    spritelist.draw(screen)
-
-    pygame.display.flip()
+# Game Over Screen
