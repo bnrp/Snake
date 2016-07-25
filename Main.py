@@ -1,14 +1,3 @@
-
-# To do:
-
-'''
-    - Fix wall collision
-    - Add scoreboard
-    - Add game over screen
-    - Add restart button (make entire thing loop)
-    - Add highscore scoreboard
-'''
-
 import os
 import sys
 import time
@@ -24,6 +13,7 @@ pygame.init()
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+GREY = (169, 169, 169)
 RED = (255, 0, 0)
 
 segment_height = 33
@@ -51,6 +41,12 @@ wallbot = None
 
 addTurn = False
 
+score = 0
+
+font = pygame.font.SysFont("monospace", 30)
+
+empt = []
+
 # Functions
 
 def getx(Segment):
@@ -72,11 +68,12 @@ def update():
     wallsprite.draw(screen)
     foodsprite.draw(screen)
     spritelist.draw(screen)
+    drawscore()
     pygame.display.flip()
 
 def createFood():
     global food
-    food = Food.Food(RED)
+    food = Food.Food(RED, snake_segment)
     foodsprite.add(food)
     global isfood
     isfood = False
@@ -124,6 +121,11 @@ def wallsCreate():
     walllist[2] = wallright
     walllist[3] = wallbot
 
+def drawscore():
+    mess = "Score: " + str(score)
+    label = font.render(mess, 1, GREY)
+    screen.blit(label, (2, screen_height - 19))
+
 # Create screen
 
 screen_width = segment_width * 15 + segment_pad * 14
@@ -140,15 +142,19 @@ segmentInit()
 
 done = False
 
-while not done:
+quit = False
 
-    time.sleep(.2) # Refresh speed
+while not quit:
 
-    # Event handler
+    if done == False:
 
-    for event in pygame.event.get():
+        time.sleep(.14) # Refresh speed
 
-        # Movement events
+        # Event handler
+
+        event =  pygame.event.poll()
+
+            # Movement events
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_LEFT:
@@ -168,52 +174,65 @@ while not done:
                     changex =0
                     changey = segment_height + segment_pad
 
-    # Self collision
+        # Self collision
 
-    if len(snake_segment) > 1:
-        for i in range(0, len(snake_segment) - 1):
-            if pygame.sprite.collide_rect(snake_segment[-1], snake_segment[i]):
-                done = True
+        if len(snake_segment) > 1:
+            for i in range(0, len(snake_segment) - 1):
+                if pygame.sprite.collide_rect(snake_segment[-1], snake_segment[i]):
+                    done = True
 
-    '''
+        # Things that happen when you don't lose
 
-    # Wall collision
+        if done == False:
 
-    for i in range(0, 4):
-        print(i)
-        if pygame.sprite.collide_rect(snake_segment[-1], walllist[i]):
-                 done = True
+            # Food
 
-    '''
+            if isfood == True:
+                createFood()
 
-    # Things that happen when you don't lose
+            if pygame.sprite.collide_rect(snake_segment[-1], food):
+                removeFood()
+                addSegment()
+                score += 1
 
-    if done == False:
+            # Movement
 
-        # Food
+            if addTurn == False:
+                move()
+            elif addTurn == True:
+                addTurn = False
 
-        if isfood == True:
-            createFood()
+            # Wall collision
 
-        if pygame.sprite.collide_rect(snake_segment[-1], food):
-            removeFood()
-            addSegment()
+            for i in range(0, 4):
+                if pygame.sprite.collide_rect(snake_segment[-1], walllist[i]):
+                    done = True
 
-        # Movement
+            # Update the window
 
-        if addTurn == False:
-            move()
-        elif addTurn == True:
-            addTurn = False
+            if done == False:
+                update()
 
-        # Update the window
+    elif done == True:
 
-        update()
+        # Game Over Screen
 
+        screen.fill(BLACK)
+        drawscore()
+        event = pygame.event.poll()
+
+        pygame.display.flip()
+
+        if event.type == pygame.KEYDOWN:
+            if event.key == K_RETURN:
+                spritelist = None
+                spritelist = pygame.sprite.Group()
+                snake_segment = empt
+                removeFood()
+                segmentInit()
+                changex = 0
+                changey = 0
+                done = False
+                score = 0
     else:
-        print('GAME OVER')
-        print('Score: ', len(snake_segment) - 1)
-
-# Game Over Screen
-
-
+        done == False
